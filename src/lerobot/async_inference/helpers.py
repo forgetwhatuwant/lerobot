@@ -78,7 +78,8 @@ def resize_robot_observation_image(image: torch.tensor, resize_dims: tuple[int, 
     # Add batch dimension for interpolate: (C, H, W) -> (1, C, H, W)
     image_batched = image.unsqueeze(0)
     # Interpolate and remove batch dimension: (1, C, H, W) -> (C, H, W)
-    resized = torch.nn.functional.interpolate(image_batched, size=dims, mode="bilinear", align_corners=False)
+    # Cast to float because interpolate doesn't support ByteTensor
+    resized = torch.nn.functional.interpolate(image_batched.float(), size=dims, mode="bilinear", align_corners=False)
 
     return resized.squeeze(0)
 
@@ -152,6 +153,7 @@ def prepare_raw_observation(
 
     # 2. Greps all observation.images.<> keys
     image_keys = list(filter(is_image_key, lerobot_obs))
+    
     # state's shape is expected as (B, state_dim)
     state_dict = {OBS_STATE: extract_state_from_raw_observation(lerobot_obs)}
     image_dict = {
